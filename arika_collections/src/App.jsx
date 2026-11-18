@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import './App.css'
 
@@ -19,7 +19,9 @@ const categories = ['All pieces', 'Necklaces', 'Earrings', 'Naths', 'Bangles']
 const imageUrl = (id, width = 720) => `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${width}&q=85`
 
 function whatsappLink(product) {
-  const message = `Namaste! I’m interested in the ${product.name} (${product.price}) from Arika Collections. Could you please share more details?`
+  const productPage = `${window.location.origin}/product/${product.slug}`
+  const photo = imageUrl(product.image, 1200)
+  const message = `Namaste! I’m interested in the ${product.name} (${product.price}) from Arika Collections.\n\nDetails: ${productPage}\nProduct photo: ${photo}\n\nCould you please share more details?`
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`
 }
 
@@ -29,6 +31,43 @@ function App({ page = 'home', productSlug }) {
   const [search, setSearch] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
   const selectedProduct = products.find((product) => product.slug === productSlug)
+  const [shareFile, setShareFile] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    setShareFile(null)
+    if (page !== 'product' || !selectedProduct) return undefined
+
+    fetch(imageUrl(selectedProduct.image, 1200))
+      .then((response) => {
+        if (!response.ok) throw new Error('Could not load product photo')
+        return response.blob()
+      })
+      .then((blob) => {
+        if (!cancelled) setShareFile(new File([blob], `${selectedProduct.slug}.jpg`, { type: blob.type || 'image/jpeg' }))
+      })
+      .catch(() => {
+        if (!cancelled) setShareFile(null)
+      })
+
+    return () => { cancelled = true }
+  }, [page, selectedProduct])
+
+  const shareProductPhoto = async () => {
+    if (shareFile && navigator.share && navigator.canShare?.({ files: [shareFile] })) {
+      try {
+        await navigator.share({
+          files: [shareFile],
+          title: selectedProduct.name,
+          text: `Arika Collections · ${selectedProduct.name} · ${selectedProduct.price}\n${window.location.origin}/product/${selectedProduct.slug}`,
+        })
+        return
+      } catch (error) {
+        if (error.name === 'AbortError') return
+      }
+    }
+    window.open(whatsappLink(selectedProduct), '_blank', 'noopener,noreferrer')
+  }
 
   const openProduct = (event, product) => {
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
@@ -67,7 +106,8 @@ function App({ page = 'home', productSlug }) {
           <div className="detail-copy"><div className="eyebrow">{selectedProduct.category} · ARIKA EDIT</div><h1>{selectedProduct.name}</h1><div className="detail-price">{selectedProduct.price} <span>INR</span></div><p className="detail-description">{selectedProduct.detail}</p><div className="detail-divider" />
             <div className="detail-highlights"><h2>A piece to treasure</h2>{selectedProduct.details.map((detail) => <div key={detail}><span>✳</span>{detail}</div>)}</div>
             <div className="detail-care"><h2>Care, with love</h2><p>{selectedProduct.care}</p></div>
-            <a className="detail-whatsapp" href={whatsappLink(selectedProduct)} target="_blank" rel="noreferrer"><span>◉</span> Enquire about this piece on WhatsApp <b>↗</b></a>
+            <button className="detail-whatsapp" type="button" onClick={shareProductPhoto}><span>◉</span> Share photo &amp; details <b>↗</b></button>
+            <a className="detail-whatsapp direct-whatsapp" href={whatsappLink(selectedProduct)} target="_blank" rel="noreferrer">Open WhatsApp enquiry <b>↗</b></a>
             <p className="detail-footnote">Ask us about availability, sizing, customisation and delivery. We’ll be happy to help.</p>
           </div>
         </section>
