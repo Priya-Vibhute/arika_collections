@@ -106,8 +106,8 @@ function App({ page = 'home', productSlug }) {
           <div className="detail-copy"><div className="eyebrow">{selectedProduct.category} · ARIKA EDIT</div><h1>{selectedProduct.name}</h1><div className="detail-price">{selectedProduct.price} <span>INR</span></div><p className="detail-description">{selectedProduct.detail}</p><div className="detail-divider" />
             <div className="detail-highlights"><h2>A piece to treasure</h2>{selectedProduct.details.map((detail) => <div key={detail}><span>✳</span>{detail}</div>)}</div>
             <div className="detail-care"><h2>Care, with love</h2><p>{selectedProduct.care}</p></div>
-            <button className="detail-whatsapp" type="button" onClick={shareProductPhoto}><span>◉</span> Share photo &amp; details <b>↗</b></button>
-            <a className="detail-whatsapp direct-whatsapp" href={whatsappLink(selectedProduct)} target="_blank" rel="noreferrer">Open WhatsApp enquiry <b>↗</b></a>
+            <a className="detail-whatsapp" href={whatsappLink(selectedProduct)} target="_blank" rel="noreferrer"><span>◉</span> Send enquiry on WhatsApp <b>↗</b></a>
+            <button className="share-photo-button" type="button" onClick={shareProductPhoto}>Share actual product photo <b>↗</b></button>
             <p className="detail-footnote">Ask us about availability, sizing, customisation and delivery. We’ll be happy to help.</p>
           </div>
         </section>
